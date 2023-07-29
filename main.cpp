@@ -39,10 +39,10 @@ int main() {
     /**
      * Dictionary is initialized with a constrained size of just 4 slots.
      * This is to demostrate the linked list style collision handling.
-     * You can jump to SimpleDictionary.h to increase member var `tableSize`.
-     * The hash keys will distribute evenly at values closer to (or above) the total number of entries.
+     * After running the program and checking the console output for a dictionary of size 4, try changing the size contructor arg from 4 to 10.
+     * You'll notice the hash keys distribute more evenly at values closer to (or above) the total number of entries.
      */
-    SimpleDictionary dictionary;
+    SimpleDictionary dictionary(4);
     
     printf("\n> Initialize dictionary entries.\n");
     for (auto i = 0; i < testKeys.size(); ++i) {
