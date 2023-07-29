@@ -42,7 +42,8 @@ int main() {
     printf("Try a constrained size like 4 to test the hash table's linked list collision handling.\n");
     printf("Or try a larger value (>= 10) to see the hash keys distributed more evenly across slots.\n\n");
     printf(">");
-    scanf("%d", &size);
+    // Some compilers complain about `scanf()` security vulnerabilities so used std::cin instead.
+    std::cin >> size;
     printf(" ^ Dictionary size\n");
     
     // Heap allocating here so that we have finer control of obj lifecycle.
@@ -50,7 +51,7 @@ int main() {
     SimpleDictionary* dictionary = new SimpleDictionary(size);
 
     printf("\n> Initialize dictionary entries.\n");
-    for (auto i = 0; i < testKeys.size(); ++i) {
+    for (int i = 0; i < testKeys.size(); ++i) {
         dictionary->Add(testKeys[i].c_str(), &testVals[i], &freeMemCallback);
     }
     

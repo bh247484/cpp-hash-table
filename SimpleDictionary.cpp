@@ -60,7 +60,7 @@ bool SimpleDictionary::Add(const char* pKey, void* pValue, void (*pfnFreeValue)(
     
     // Entry with this hash already registered.
     // Traverse linkedEntries linked list.
-    Entry* previousEntry;
+    Entry* previousEntry = nullptr;
     while (targetEntry != NULL) {
         // If pKey matches key of Entry, we're updating an existing Entry.
         if (strcmp(targetEntry->key, pKey) == 0) {
