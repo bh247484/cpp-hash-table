@@ -9,8 +9,8 @@ SimpleDictionary::SimpleDictionary(int size)
     : m_tableSize(size)
 {
     // Dynamically allocate memory for Entry pointer array.
-    Entry** testEntries = new Entry*[m_tableSize] { nullptr };
-    m_table.slots = testEntries;
+    Entry** initEntries = new Entry*[m_tableSize] { nullptr };
+    m_table.slots = initEntries;
 }
 
 SimpleDictionary::~SimpleDictionary()
