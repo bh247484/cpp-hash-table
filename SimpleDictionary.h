@@ -30,8 +30,8 @@ public:
     // of the key is stored in pOutValue and true is returned; otherwise, false is returned.
     bool Find(const char* pKey, void** pOutValue) const;
 
-    // Prints current state of hash table to console.
-    // Organized by slots with each (printed) slot having one or more Entries.
+    // Prints current state of hash table to console, skipping nullptr slots.
+    // Organized by slots with each non null slot having one or more Entries.
     void logTable();
 
 private:

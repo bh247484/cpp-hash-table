@@ -9,6 +9,7 @@ SimpleDictionary::SimpleDictionary(int size)
     : m_tableSize(size)
 {
     // Dynamically allocate memory for Entry pointer array.
+    // In a nondebugging scenario it'd be better to use a `m_tableSize * 1.25` array len to give a little headroom.
     Entry** initEntries = new Entry*[m_tableSize] { nullptr };
     m_table.slots = initEntries;
 }
@@ -28,7 +29,8 @@ SimpleDictionary::~SimpleDictionary()
             targetEntry = nextEntry;
         }
     }
-    // We dynamically allocated this mem in the constructor, we need to cleanup here.
+    // Free the double pointer to Entry pointer array we allocated in the constructor.
+    // This is the double pointer itself so we can use `free` instead of `delete`.
     free(m_table.slots);
 }
 
@@ -61,7 +63,7 @@ bool SimpleDictionary::Add(const char* pKey, void* pValue, void (*pfnFreeValue)(
         if (strcmp(targetEntry->key, pKey) == 0) {
             targetEntry->value = pValue;
             targetEntry->callback = pfnFreeValue;
-            printf("%s %s => %d\n\n", "Update:", pKey, *(int*)pValue);
+            printf("%s %s => %d\n", "Update:", pKey, *(int*)pValue);
             return true;
         }
         
@@ -113,11 +115,14 @@ bool SimpleDictionary::Remove(const char* pKey)
                 previousEntry->linkedEntry = nullptr;
             }
             
+            // Grab the value before we delete the Entry so we can log it.
+            int value = *(int*)targetEntry->value;
+            
             // Finally, free Entry memory.
             // Using `delete` so that Entry deconstructor is called.
             delete targetEntry;
 
-            printf("%s\n", "Entry removed.");
+            printf("%s %s => %d\n", "Removed:", pKey, value);
             return true;
         }
         
@@ -126,11 +131,14 @@ bool SimpleDictionary::Remove(const char* pKey)
         targetEntry = previousEntry->linkedEntry;
     }
     
+    // Grab the value before we delete the Entry so we can log it.
+    int value = *(int*)targetEntry->value;
+    
     // Cleanup Entry.
     delete targetEntry;
     m_table.slots[hashedKey] = nullptr;
     
-    printf("%s\n", "Entry removed.");
+    printf("%s %s => %d\n", "Removed:", pKey, value);
     return true;
 }
 
@@ -140,7 +148,7 @@ bool SimpleDictionary::Find(const char* pKey, void** pOutValue) const
     Entry* targetEntry = m_table.slots[hashedKey];
     
     if (targetEntry == NULL) {
-        printf("%s\n", "Entry does not exist.");
+        printf("Entry '%s' does not exist.\n", pKey);
         return false;
     }
     
@@ -164,7 +172,7 @@ void SimpleDictionary::logTable()
     printf("\n\n");
     printf("---- Log Table Start ----\n");
     printf("\n");
-    // Loop through all Entries in table
+    // Loop through all Entries in table.
     for (int i = 0; i < m_tableSize; ++i) {
         Entry* targetEntry = m_table.slots[i];
         
@@ -195,6 +203,6 @@ int SimpleDictionary::hashStr(const char* inputStr ) const {
         hashVal = hashVal * 37 + inputStr[i];
     }
     
-    // Scale by number of slots in hash m_table.
+    // Scale by number of slots in hash table.
     return hashVal % m_tableSize;
 }

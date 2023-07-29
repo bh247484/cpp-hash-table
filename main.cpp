@@ -10,9 +10,9 @@
 #include <vector>
 #include "SimpleDictionary.h"
 
-void testDealloc(void* value)
+void freeMemCallback(void* value)
 {
-    printf("Mem callback: %d\n", *(int*)value);
+    printf("Callback - [ Addr: %p, Val: %d ]\n", value, *(int*)value);
 }
 
 int main() {
@@ -36,51 +36,71 @@ int main() {
         "key9",
     };
     
-    /**
-     * Dictionary is initialized with a constrained size of just 4 slots.
-     * This is to demostrate the linked list style collision handling.
-     * After running the program and checking the console output for a dictionary of size 4, try changing the size contructor arg from 4 to 10.
-     * You'll notice the hash keys distribute more evenly at values closer to (or above) the total number of entries.
-     */
-    SimpleDictionary dictionary(4);
+    // Dynamically allocate dictionary size based on user input.
+    int size;
+    printf("Enter a dictionary size (integer).\n\n");
+    printf("Try a constrained size like 4 to test the hash table's linked list collision handling.\n");
+    printf("Or try a larger value (>= 10) to see the hash keys distributed more evenly across slots.\n\n");
+    printf(">");
+    scanf("%d", &size);
+    printf(" ^ Dictionary size\n");
     
+    // Heap allocating here so that we have finer control of obj lifecycle.
+    // We'll want to manually trigger the freeMemCallbacks.
+    SimpleDictionary* dictionary = new SimpleDictionary(size);
+
     printf("\n> Initialize dictionary entries.\n");
     for (auto i = 0; i < testKeys.size(); ++i) {
-        dictionary.Add(testKeys[i].c_str(), &testVals[i], &testDealloc);
+        dictionary->Add(testKeys[i].c_str(), &testVals[i], &freeMemCallback);
     }
     
     printf("\n\n> Initial hash table state.");
-    dictionary.logTable();
+    dictionary->logTable();
+
+    // Begin Test Suite
     
-    printf("\n> Test updating an existing value.\n");
-    int newVal = 11;
-    dictionary.Add("key1", &newVal, &testDealloc);
-
-
-    printf("\n> Test finding a key.\n");
+    // Test 1, Find.
+    printf("\n> Test 1 - Finding an Entry.\n");
     void* voidAllocation = nullptr;
     void** outDubPtr = &voidAllocation;
-    bool foundEntry = dictionary.Find("key5", outDubPtr);
+    bool foundEntry = dictionary->Find("key5", outDubPtr);
     printf(".Find()'s boolean return value: %s\n", foundEntry ? "'true'" : "'false'");
 
-    printf("\n>> 1. Compare Values.\n");
+    printf("\n>> Compare Values.\n");
     printf("Local: %d\nDictionary: %d\n", testVals[5], *(int*)*outDubPtr);
     
-    printf("\n>> 2. Compare Memory Addresses.\n");
-    printf("Local: %p\nDictionary: %p\n\n", &testVals[5], *outDubPtr);
+    printf("\n>> Compare Memory Addresses.\n");
+    printf("Local: %p\nDictionary: %p\n", &testVals[5], *outDubPtr);
     
-    printf("\n> Test accessing key that doesn't exist.\n");
-    bool unfoundEntry = dictionary.Find("not-a-key", outDubPtr);
-    printf(".Find()'s boolean return value: %s", unfoundEntry ? "'true'" : "'false'");
+    // Test 2, Find error handling.
+    printf("\n> Test 2 - Accessing an Entry that doesn't exist.\n");
+    bool unfoundEntry = dictionary->Find("not-a-key", outDubPtr);
+    printf(".Find()'s boolean return value: %s\n", unfoundEntry ? "'true'" : "'false'");
     
-    printf("\n> Test key removal.\n");
-    dictionary.Remove("key5");
+    // Test 3, Update.
+    printf("\n> Test 3 - Updating an Entry.\n");
+    int newVal = 11;
+    dictionary->Add("key1", &newVal, &freeMemCallback);
+    
+    printf("\n>> Confirm key was updated.\n");
+    dictionary->Find("key1", outDubPtr);
+    
+    // Test 4, Remove.
+    printf("\n> Test 4 - Removing an Entry.\n");
+    dictionary->Remove("key5");
+
     printf("\n>> Confirm key no longer exists.\n");
-    bool removedEntry = dictionary.Find("key5", outDubPtr);
+    bool removedEntry = dictionary->Find("key5", outDubPtr);
     printf(".Find()'s boolean return value: %s", removedEntry ? "'true'" : "'false'");
     
     printf("\n\n> Final hash table state.");
-    dictionary.logTable();
+    dictionary->logTable();
+    
+    // Deleting dictionary here will trigger freeMemCallback's for each Entry.
+    // The callbacks print the memory address and dereferenced int of each Entry's value field.
+    delete dictionary;
+    
+    printf("\n\n^^ Scroll up to view program's test suite output. ^^\n\n");
     
     return 0;
 }
