@@ -12,8 +12,7 @@
 
 void testDealloc(void* value)
 {
-    std::cout << "Mem callback: ";
-    std::cout << *(int*)value << std::endl;
+    printf("Mem callback: %d\n", *(int*)value);
 }
 
 int main() {
