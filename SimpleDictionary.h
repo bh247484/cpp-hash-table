@@ -5,7 +5,7 @@
 class SimpleDictionary
 {
 public:
-    SimpleDictionary();
+    SimpleDictionary(int size);
     ~SimpleDictionary();
 
     // Disabled move/copy constructors and move/assignment operators.
@@ -35,10 +35,15 @@ public:
     void logTable();
 
 private:
-    // Not a dynamically sized hash table. Num slots known at compile time.
-    static const int tableSize = 4;
+    // Initialized in the constructor.
+    const int m_tableSize;
 
     struct Entry {
+        ~Entry()
+        {
+            // Run the user provided callback when Entry is destroyed.
+            callback(value);
+        }
         const char* key;
         void* value;
         void (*callback)(void *);
@@ -46,9 +51,9 @@ private:
     };
 
     struct HashTable {
-        Entry* slots[tableSize] = { nullptr };
+        Entry** slots;
     };
     
-    HashTable table;
+    HashTable m_table;
     int hashStr(const char* str) const;
 };

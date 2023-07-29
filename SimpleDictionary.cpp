@@ -5,34 +5,38 @@
 #include "SimpleDictionary.h"
 // NOTE: No additional includes should be added to this file besides the ones above.
 
-SimpleDictionary::SimpleDictionary()
+SimpleDictionary::SimpleDictionary(int size)
+    : m_tableSize(size)
 {
+    // Dynamically allocate memory for Entry pointer array.
+    Entry** testEntries = new Entry*[m_tableSize] { nullptr };
+    m_table.slots = testEntries;
 }
 
 SimpleDictionary::~SimpleDictionary()
 {
     // Cleanup heap allocations.
-    for (int i = 0; i < tableSize; ++i) {
-        Entry* targetEntry = table.slots[i];
+    for (int i = 0; i < m_tableSize; ++i) {
+        Entry* targetEntry = m_table.slots[i];
         
         while (targetEntry != NULL) {
-            // Run mem freeing callback.
-            targetEntry->callback(targetEntry->value);
             // Capture linkedEntry before we remove current Entry.
             Entry* nextEntry = targetEntry->linkedEntry;
-            // Free Entry memory.
+            // Free Entry memory, using delete so Entry deconstructor is called.
             delete targetEntry;
             // Recurse through linked list where applicable.
             targetEntry = nextEntry;
         }
     }
+    // We dynamically allocated this mem in the constructor, we need to cleanup here.
+    free(m_table.slots);
 }
 
 bool SimpleDictionary::Add(const char* pKey, void* pValue, void (*pfnFreeValue)(void*))
 {
     int hashedKey = hashStr(pKey);
     
-    Entry* targetEntry = table.slots[hashedKey];
+    Entry* targetEntry = m_table.slots[hashedKey];
     
     Entry* newEntry = new Entry {
         pKey,
@@ -44,7 +48,7 @@ bool SimpleDictionary::Add(const char* pKey, void* pValue, void (*pfnFreeValue)(
     // Entry not yet initialized, no collisions/chains possible.
     // Add new Entry.
     if (targetEntry == NULL) {
-        table.slots[hashedKey] = newEntry;
+        m_table.slots[hashedKey] = newEntry;
         printf("%s %s => %d\n", "New:", pKey, *(int*)pValue);
         return true;
     }
@@ -77,7 +81,7 @@ bool SimpleDictionary::Add(const char* pKey, void* pValue, void (*pfnFreeValue)(
 bool SimpleDictionary::Remove(const char* pKey)
 {
     int hashedKey = hashStr(pKey);
-    Entry* targetEntry = table.slots[hashedKey];
+    Entry* targetEntry = m_table.slots[hashedKey];
     
     if (targetEntry == NULL) {
         printf("%s\n", "Entry does not exist, it cannot be removed.");
@@ -91,12 +95,12 @@ bool SimpleDictionary::Remove(const char* pKey)
         if (strcmp(targetEntry->key, pKey) == 0) {
             // First list item with no linked children, nullify entire slot.
             if (previousEntry == NULL && targetEntry->linkedEntry == NULL) {
-                table.slots[hashedKey] = nullptr;
+                m_table.slots[hashedKey] = nullptr;
             }
             
             // First list item with linked child.
             if (previousEntry == NULL && targetEntry->linkedEntry) {
-                table.slots[hashedKey] = targetEntry->linkedEntry;
+                m_table.slots[hashedKey] = targetEntry->linkedEntry;
             }
             
             // If list item has parent and child, remove it and link its parent + child.
@@ -109,10 +113,8 @@ bool SimpleDictionary::Remove(const char* pKey)
                 previousEntry->linkedEntry = nullptr;
             }
             
-            // Run dealloc callback.
-            targetEntry->callback(targetEntry->value);
-            
             // Finally, free Entry memory.
+            // Using `delete` so that Entry deconstructor is called.
             delete targetEntry;
 
             printf("%s\n", "Entry removed.");
@@ -126,7 +128,7 @@ bool SimpleDictionary::Remove(const char* pKey)
     
     // Cleanup Entry.
     delete targetEntry;
-    table.slots[hashedKey] = nullptr;
+    m_table.slots[hashedKey] = nullptr;
     
     printf("%s\n", "Entry removed.");
     return true;
@@ -135,7 +137,7 @@ bool SimpleDictionary::Remove(const char* pKey)
 bool SimpleDictionary::Find(const char* pKey, void** pOutValue) const
 {
     int hashedKey = hashStr(pKey);
-    Entry* targetEntry = table.slots[hashedKey];
+    Entry* targetEntry = m_table.slots[hashedKey];
     
     if (targetEntry == NULL) {
         printf("%s\n", "Entry does not exist.");
@@ -153,7 +155,7 @@ bool SimpleDictionary::Find(const char* pKey, void** pOutValue) const
         targetEntry = targetEntry->linkedEntry;
     }
     
-    printf("%s\n", "Entry not found.");
+    printf("Entry: '%s' not found.\n", pKey);
     return false;
 }
 
@@ -163,8 +165,8 @@ void SimpleDictionary::logTable()
     printf("---- Log Table Start ----\n");
     printf("\n");
     // Loop through all Entries in table
-    for (int i = 0; i < tableSize; ++i) {
-        Entry* targetEntry = table.slots[i];
+    for (int i = 0; i < m_tableSize; ++i) {
+        Entry* targetEntry = m_table.slots[i];
         
         // Don't print null Entries.
         if (targetEntry == NULL) {
@@ -186,12 +188,13 @@ void SimpleDictionary::logTable()
 }
 
 int SimpleDictionary::hashStr(const char* inputStr ) const {
-    int hashVal = 0;
+    // Encountered edge case negative hashVals so coercing positive integers here with unsigned.
+    unsigned int hashVal = 0;
     
     for (int i = 0; i < strlen(inputStr); ++i) {
         hashVal = hashVal * 37 + inputStr[i];
     }
     
-    // Scale by number of slots in hash table.
-    return hashVal % tableSize;
+    // Scale by number of slots in hash m_table.
+    return hashVal % m_tableSize;
 }
