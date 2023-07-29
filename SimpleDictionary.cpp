@@ -8,8 +8,11 @@
 SimpleDictionary::SimpleDictionary(int size)
     : m_tableSize(size)
 {
-    // Dynamically allocate memory for Entry pointer array.
-    // In a nondebugging scenario it'd be better to use a `m_tableSize * 1.25` array len to give a little headroom.
+    /**
+     * Dynamically allocate memory for Entry pointer array.
+     * In a nondebugging scenario it'd be better to use a `m_tableSize * 1.25` array len to give a little headroom.
+     * This hash table has a fixed size and slot/bucket collisions are handled via linked list, no dynamic resizing.
+     */
     Entry** initEntries = new Entry*[m_tableSize] { nullptr };
     m_table.slots = initEntries;
 }

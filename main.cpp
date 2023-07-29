@@ -19,7 +19,7 @@ int main() {
     
     /**
      * Test variable declarations. They'll be iterated over and added to the dictionary.
-     * I'm using integers as values so you'll see some *(int*) dereferencing/casting for log outputs.
+     * We're using integers as test values here so you'll see some *(int*) dereferencing/casting for log outputs.
      * The value entries in the dictionary are still void pointers though so the logging could be reworked for other data types.
      */
     int testVals[] = {0,1,2,3,4,5,6,7,8,9};
@@ -46,7 +46,7 @@ int main() {
     printf(" ^ Dictionary size\n");
     
     // Heap allocating here so that we have finer control of obj lifecycle.
-    // We'll want to manually trigger the freeMemCallbacks.
+    // This way we can manually trigger the freeMemCallbacks when `dictionary`, along with its Entries, is deleted.
     SimpleDictionary* dictionary = new SimpleDictionary(size);
 
     printf("\n> Initialize dictionary entries.\n");
@@ -97,7 +97,7 @@ int main() {
     dictionary->logTable();
     
     // Deleting dictionary here will trigger freeMemCallback's for each Entry.
-    // The callbacks print the memory address and dereferenced int of each Entry's value field.
+    // The callbacks print the memory address and dereferenced int val of each Entry's value field.
     delete dictionary;
     
     printf("\n\n^^ Scroll up to view program's test suite output. ^^\n\n");
